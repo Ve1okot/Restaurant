@@ -9,10 +9,9 @@ const cart = () => {
     let sum = 0
 
     const resetCart = () => {
-        body.innerHTML = 'Побежали готовить!'
         localStorage.removeItem('cart');
-        setTimeout(() => { modalCart.classList.remove('is-open') }, 2000);
-        
+        modalCart.classList.remove('is-open');
+        location.reload(false);
     }
 
     const incrementCount = (id) => {
@@ -33,13 +32,11 @@ const cart = () => {
 
         cartArray.map((item) => {
             if (item.id === id) {
-                item.count = item.count > 0 ? item.count - 1 : 0
-                // if (item.count >= 1) {
-                //     item.count--
-                // } else if (item.count == 0) {
-                //     delete item;
-                //     return;
-                // }
+                if (item.count > 1) {
+                    item.count--
+                } else {
+                    cartArray.splice(cartArray.indexOf(item), 1);
+                }
             }
             return item
         })
@@ -49,7 +46,12 @@ const cart = () => {
 
     const renderItems = (data) => {
         body.innerHTML = ''
-        data.forEach(({ name, price, id, count}) => {
+        data.forEach(({
+            name,
+            price,
+            id,
+            count
+        }) => {
             const cartElem = document.createElement('div')
             cartElem.classList.add('food-row')
             cartElem.innerHTML = `
@@ -63,13 +65,11 @@ const cart = () => {
             `
             body.append(cartElem)
         })
-        
-        cartArray = JSON.parse(localStorage.getItem('cart'))
-        
-        console.log(sum);
 
-        sum = cartArray.reduce(function (price, counter) {
-            return price*counter;
+        cartArray = JSON.parse(localStorage.getItem('cart'))
+
+        sum = cartArray.reduce(function (accum, curr) {
+            return accum + curr.price * curr.count
         }, 0)
 
         priceTag.textContent = sum
@@ -84,22 +84,22 @@ const cart = () => {
             incrementCount(event.target.dataset.index);
         }
     })
-    
+
     buttonSend.addEventListener('click', () => {
         const cartArray = JSON.parse(localStorage.getItem('cart'))
 
         fetch('https://jsonplaceholder.typicode.com/posts', {
-            method: 'POST',
-            body: cartArray
-        })
-        .then(response => {
-            if (response.ok) {
-                resetCart()
-            }
-        })
-        .catch(error => {
-            console.error(error);
-        })
+                method: 'POST',
+                body: cartArray
+            })
+            .then(response => {
+                if (response.ok) {
+                    resetCart()
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            })
     })
 
     buttonCart.addEventListener('click', () => {
@@ -114,10 +114,8 @@ const cart = () => {
     })
 
     clearCart.addEventListener('click', () => {
-        localStorage.removeItem('cart')
-        body.innerHTML = ''
-        priceTag.textContent = 0
-        modalCart.classList.remove('is-open')
+        priceTag.textContent = 0;
+        resetCart()
     })
 }
 cart()
